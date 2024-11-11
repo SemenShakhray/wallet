@@ -4,7 +4,7 @@ import (
 	"context"
 	"wallet/internal/config"
 	"wallet/internal/models"
-	"wallet/internal/storage"
+	"wallet/internal/store"
 )
 
 type Repositorer interface {
@@ -16,11 +16,11 @@ type Repositorer interface {
 }
 
 type Repository struct {
-	Store storage.Storer
+	Store store.Storer
 }
 
 func NewRepository(cfg config.Config) (Repositorer, error) {
-	store, err := storage.ConnectDB(cfg.DSN)
+	store, err := store.ConnectDB(cfg.DSN)
 	if err != nil {
 		return nil, err
 	}

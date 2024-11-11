@@ -34,7 +34,7 @@ func NewApp() (application, error) {
 		return application{}, err
 	}
 
-	route, err := route.NewRouter(cfg, service)
+	route, err := route.NewRouter(service)
 	if err != nil {
 		log.Printf("failed init route: %v", err)
 		return application{}, err

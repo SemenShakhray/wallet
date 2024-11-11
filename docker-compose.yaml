@@ -1,16 +1,29 @@
-
 services:
+  web:
+    build: .
+    env_file:
+      - "config.env"
+    ports:
+      - 7040:7040
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: go run cmd/main.go
+    depends_on:
+      - postgres
+  
   postgres:
-    image: postgres
+    image: postgres:latest
+    env_file:
+      - "config.env"
     environment:
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: wallet
     ports:
       - "5432:5432"
-    
-       # app:
-  #   build: ./cmd/main
-  #   ports:
-  #     - "8080:8080"
-  #   depends_on: 
-  #     - postgres  
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

@@ -20,7 +20,7 @@ type Servicer interface {
 }
 
 type Service struct {
-	repository repository.Repositorer
+	Repository repository.Repositorer
 }
 
 func NewService(cfg config.Config) (Servicer, error) {
@@ -29,7 +29,7 @@ func NewService(cfg config.Config) (Servicer, error) {
 		return nil, err
 	}
 	return &Service{
-		repository: repo,
+		Repository: repo,
 	}, nil
 }
 
@@ -43,7 +43,7 @@ func (s *Service) GetBalance(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, `{"error":"wrong wallet uuid"}`, http.StatusBadRequest)
 		return
 	}
-	ok, err := s.repository.CheckExist(ctx, wallet_id)
+	ok, err := s.Repository.CheckExist(ctx, wallet_id)
 	if err != nil {
 		http.Error(w, `{"error":"check exist is failed"}`, http.StatusInternalServerError)
 		return
@@ -54,7 +54,7 @@ func (s *Service) GetBalance(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	balance, err := s.repository.GetBalance(ctx, wallet_id)
+	balance, err := s.Repository.GetBalance(ctx, wallet_id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -82,35 +82,26 @@ func (s *Service) Deposited(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ok, err := s.repository.CheckExist(ctx, wallet.UUID)
+	ok, err := s.Repository.CheckExist(ctx, wallet.UUID)
 	if err != nil {
 		http.Error(w, `{"error":"check exist is failed"}`, http.StatusInternalServerError)
 		return
 	}
 
 	if !ok {
-		err := s.repository.CreteWallet(ctx, wallet)
+		err := s.Repository.CreteWallet(ctx, wallet)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(fmt.Sprintf("wallet_id: %s\nbalance: %d", wallet.UUID, wallet.Amount)))
+		return
 	}
-	var balance int
-	switch strings.ToLower(wallet.OpperationType) {
-	case "deposit":
-		balance, err = s.repository.Deposited(ctx, wallet)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	case "withdraw":
-		wallet.Amount = -wallet.Amount
-		balance, err = s.repository.Deposited(ctx, wallet)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	default:
-		http.Error(w, `{"error":"failed opperation with wallet"}`, http.StatusInternalServerError)
+
+	balance, err := s.Repository.Deposited(ctx, wallet)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -120,5 +111,5 @@ func (s *Service) Deposited(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) CloseConnectionDB() {
-	s.repository.CloseConnectionDB()
+	s.Repository.CloseConnectionDB()
 }
