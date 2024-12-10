@@ -33,7 +33,8 @@ func ConnectDB(dsn string) (Storer, error) {
 	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS wallet (
 	id SERIAL PRIMARY KEY,
 	wallet_id VARCHAR(128),
-	amount INT)`)
+	amount INT);
+	CREATE INDEX IF NOT EXISTS wallet_uuid ON wallet (wallet_id);`)
 
 	if err != nil {
 		return nil, err
